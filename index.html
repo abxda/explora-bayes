@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-lang="pageTitle">Teorema de Bayes Interactivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+        /* Custom slider styles */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.9;
+            transition: opacity .2s;
+            border-radius: 9999px;
+        }
+        input[type=range]:hover {
+            opacity: 1;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #1d4ed8;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #1d4ed8;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        /* Animation Timeline Styles */
+        #animation-canvas {
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background-color: #f9fafb;
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+        .anim-element {
+            position: absolute;
+            transition: all 0.5s ease-in-out;
+            font-family: monospace;
+            font-size: 1.25rem;
+        }
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .fraction-line {
+            width: 100%;
+            height: 2px;
+            background-color: currentColor;
+            min-width: 60px;
+        }
+        .numerator, .denominator {
+            padding: 0.25rem;
+        }
+        .icon-svg {
+            width: 90px;
+            height: 54px;
+        }
+        .calculation-icon {
+             width: 40px;
+             height: 24px;
+        }
+        #animation-description {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 600px;
+            padding: 12px;
+            background-color: rgba(239, 246, 255, 0.95);
+            border: 1px solid rgba(191, 219, 254, 1);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #1f2937;
+            transition: opacity 0.5s;
+            z-index: 10;
+        }
+        .lang-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+
+        <header class="flex justify-end mb-4">
+            <div id="lang-switcher" class="flex border border-gray-300 rounded-lg">
+                <button id="lang-es" class="lang-btn px-4 py-1 rounded-l-lg text-sm font-semibold">ES</button>
+                <button id="lang-en" class="lang-btn px-4 py-1 rounded-r-lg text-sm font-semibold">EN</button>
+            </div>
+        </header>
+
+        <!-- Sección 1: ¡Bienvenido al Mundo de Bayes! -->
+        <section id="intro" class="text-center bg-white p-8 rounded-2xl shadow-lg mb-8 border border-gray-200">
+            <h1 class="text-4xl md:text-5xl font-bold text-blue-800 mb-4" data-lang="mainTitle">El Teorema de Bayes</h1>
+            <p class="text-xl text-gray-600" data-lang="subtitle">Actualizando tus Creencias con Datos</p>
+            <p class="mt-4 max-w-3xl mx-auto text-lg text-gray-700" data-lang="introText">
+                El Teorema de Bayes es una poderosa herramienta matemática que nos ayuda a ajustar nuestras suposiciones o probabilidades sobre algo a medida que obtenemos nueva evidencia. ¡Vamos a descubrir cómo funciona de una manera visual e interactiva!
+            </p>
+        </section>
+
+        <!-- SECTION: Presentando a los Protagonistas -->
+        <section id="protagonists" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg mb-8 border border-gray-200">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800" data-lang="protagonistsTitle">Presentando a los Protagonistas</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg flex items-center gap-4">
+                    <div id="icon-pa-protagonist" class="flex-shrink-0"></div>
+                    <div><h3 class="font-bold text-blue-800" data-lang="protagonistPaTitle">P(A): La Creencia Inicial (A Priori)</h3><p class="text-sm text-gray-700" data-lang="protagonistPaDesc">Es nuestra hipótesis o creencia base sobre algo, antes de tener nueva evidencia.</p></div>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 p-4 rounded-lg flex items-center gap-4">
+                    <div id="icon-pba-protagonist" class="flex-shrink-0"></div>
+                    <div><h3 class="font-bold text-purple-800" data-lang="protagonistPbaTitle">P(B|A): El Detector de Evidencia</h3><p class="text-sm text-gray-700" data-lang="protagonistPbaDesc">Mide qué tan bien nuestra hipótesis 'A' predice la evidencia 'B'. ¿Qué tan probable es ver 'B' si 'A' es cierto?</p></div>
+                </div>
+                <div class="bg-green-50 border border-green-200 p-4 rounded-lg flex items-center gap-4">
+                    <div id="icon-pb-protagonist" class="flex-shrink-0"></div>
+                     <div><h3 class="font-bold text-green-800" data-lang="protagonistPbTitle">P(B): La Evidencia</h3><p class="text-sm text-gray-700" data-lang="protagonistPbDesc">Es la probabilidad general de que ocurra nuestra evidencia 'B', sin importar si nuestra hipótesis es cierta o no.</p></div>
+                </div>
+                <div class="bg-gray-100 border border-gray-300 p-4 rounded-lg flex items-center gap-4">
+                    <div id="icon-pab-protagonist" class="flex-shrink-0"></div>
+                    <div><h3 class="font-bold text-gray-800" data-lang="protagonistPabTitle">P(A|B): La Creencia Actualizada (A Posteriori)</h3><p class="text-sm text-gray-700" data-lang="protagonistPabDesc"><b>Nuestro objetivo.</b> Es la probabilidad revisada de nuestra hipótesis 'A', después de haber considerado la evidencia 'B'.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Animación -->
+        <section id="derivation" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg mb-8 border border-gray-200">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-800" data-lang="logicTitle">La Lógica Detrás de la Fórmula</h2>
+            <p class="text-center text-gray-600 mb-6" data-lang="logicSubtitle">Mueve la línea de tiempo para controlar la animación de la derivación.</p>
+            <div id="animation-canvas">
+                <div id="progress-bar" class="absolute top-0 left-0 h-1 bg-gray-200 w-full"><div id="progress-fill" class="h-full bg-blue-600 transition-all duration-300"></div></div>
+                <div id="animation-description"></div>
+            </div>
+            <div class="mt-6 px-2">
+                <input type="range" id="timeline-slider" min="0" max="1000" value="0">
+            </div>
+            <div id="timeline-label" class="text-center mt-2 font-semibold text-gray-700" data-lang="timelineLabelStart">Inicio</div>
+        </section>
+
+        <!-- Sección del Diagrama Interactivo -->
+        <section id="interactive-diagram" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg mb-8 border border-gray-200">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800" data-lang="interactiveDiagramTitle">Diagrama Interactivo</h2>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="relative w-full aspect-video bg-gray-100 rounded-lg p-4 border">
+                    <svg id="venn-diagram" class="w-full h-full" viewBox="0 0 400 200"></svg>
+                    <div class="absolute top-2 left-2 text-xs text-gray-500 font-semibold">U (Universo)</div>
+                </div>
+                <div class="space-y-6">
+                    <div><label for="pA-slider" class="font-bold text-blue-700" data-lang="sliderPaTitle">P(A) - Probabilidad a Priori</label><p class="text-sm text-gray-600 mb-2" data-lang="sliderPaDesc">La probabilidad inicial del evento A.</p><input type="range" id="pA-slider" min="0.05" max="0.5" value="0.3" step="0.01"><div class="text-right font-mono text-blue-900"><span data-lang="valueLabel">Valor</span>: <span id="pA-value">0.30</span></div></div>
+                    <div><label for="pB-slider" class="font-bold text-green-700" data-lang="sliderPbTitle">P(B) - Probabilidad de la Evidencia</label><p class="text-sm text-gray-600 mb-2" data-lang="sliderPbDesc">La probabilidad del evento B (la evidencia).</p><input type="range" id="pB-slider" min="0.05" max="0.5" value="0.2" step="0.01"><div class="text-right font-mono text-green-900"><span data-lang="valueLabel">Valor</span>: <span id="pB-value">0.20</span></div></div>
+                    <div><label for="overlap-slider" class="font-bold text-purple-700" data-lang="sliderOverlapTitle">Solapamiento (Intersección)</label><p class="text-sm text-gray-600 mb-2" data-lang="sliderOverlapDesc">Ajusta la distancia entre los círculos para cambiar su intersección.</p><input type="range" id="overlap-slider" min="0" max="1" value="0.5" step="0.01"><div class="text-right font-mono text-purple-900">P(A ∩ B): <span id="intersection-value">...</span></div></div>
+                </div>
+            </div>
+             <div class="mt-8 p-4 bg-blue-50 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div><h4 class="font-semibold text-sm text-gray-600">P(A)</h4><p id="display-pA" class="font-mono text-lg font-bold text-blue-800">0.30</p></div>
+                <div><h4 class="font-semibold text-sm text-gray-600">P(B)</h4><p id="display-pB" class="font-mono text-lg font-bold text-green-800">0.20</p></div>
+                <div><h4 class="font-semibold text-sm text-gray-600">P(B|A)</h4><p id="display-pBgivenA" class="font-mono text-lg font-bold text-gray-800">...</p></div>
+                <div><h4 class="font-semibold text-sm text-gray-600">P(A|B)</h4><p id="display-pAgivenB" class="font-mono text-lg font-bold text-gray-800">...</p></div>
+            </div>
+        </section>
+        
+        <!-- SECTION: Explorando los Componentes -->
+        <section id="component-exploration" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg mb-8 border border-gray-200">
+            <h2 class="text-3xl font-bold text-center mb-6 text-gray-800" data-lang="exploreTitle">Explorando los Componentes: El Flujo de Bayes</h2>
+            <div class="space-y-6">
+                <div class="bg-gray-50 p-6 rounded-lg border">
+                    <h3 class="text-xl font-bold mb-4" data-lang="exploreStep1Title">Paso 1: Empezamos con lo que sabemos</h3>
+                    <p class="text-sm text-gray-600 mb-4" data-lang="exploreStep1Desc">Los sliders nos dan directamente nuestras probabilidades base: la probabilidad de A, la de B, y la de que ambos ocurran a la vez (la intersección).</p>
+                    <div class="flex justify-around items-center text-center font-mono">
+                         <div><div id="calc-icon-pa"></div><span id="calc-val-pa">...</span></div>
+                         <div><div id="calc-icon-pb"></div><span id="calc-val-pb">...</span></div>
+                         <div><div id="calc-icon-pint"></div><span id="calc-val-pint">...</span></div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-lg border">
+                    <h3 class="text-xl font-bold mb-4" data-lang="exploreStep2Title">Paso 2: Calculamos P(B|A) (Nuestro "Detector de Evidencia")</h3>
+                    <p class="text-sm text-gray-600 mb-4" data-lang="exploreStep2Desc"><b>Intuición:</b> Si ya sabemos que A ocurrió, nuestro "universo" se reduce al círculo A. P(B|A) es la proporción de ese nuevo universo que está ocupada por la intersección.</p>
+                     <div class="flex justify-center items-center font-mono text-2xl">
+                        P(B|A) = 
+                        <div class="fraction mx-2">
+                            <span id="calc-intersection1" class="flex items-center gap-2">...</span>
+                            <div class="fraction-line bg-gray-400 w-full"></div>
+                            <span id="calc-pa1" class="flex items-center gap-2">...</span>
+                        </div>
+                         = <span id="calc-result-pba" class="font-bold text-purple-700">...</span>
+                    </div>
+                </div>
+                 <div class="bg-gray-50 p-6 rounded-lg border">
+                    <h3 class="text-xl font-bold mb-4" data-lang="exploreStep3Title">Paso 3: Usamos Bayes para encontrar P(A|B)</h3>
+                    <p class="text-sm text-gray-600 mb-4" data-lang="exploreStep3Desc">Ahora juntamos todo. Usamos los "ingredientes" que ya tenemos para calcular la probabilidad que más nos interesa, que a menudo es la más difícil de medir directamente.</p>
+                    <div class="flex justify-around items-center flex-wrap gap-4">
+                        <div class="text-center">
+                            <h4 class="font-semibold" data-lang="formulaLabel">Fórmula</h4>
+                            <div class="font-mono text-lg mt-2">
+                                 P(A|B) = <div class="fraction"><span class="text-blue-700">P(A)</span> × <span class="text-purple-700">P(B|A)</span><div class="fraction-line"></div><span class="text-green-700">P(B)</span></div>
+                            </div>
+                        </div>
+                         <div class="text-center">
+                            <h4 class="font-semibold" data-lang="calculationLabel">Cálculo</h4>
+                            <div class="font-mono text-lg mt-2">
+                                P(A|B) = 
+                                <div class="fraction mx-2">
+                                     <span id="calc-pa2" class="flex items-center gap-1">...</span> × <span id="calc-pba2" class="font-bold text-purple-700">...</span>
+                                    <div class="fraction-line bg-gray-400 w-full"></div>
+                                    <span id="calc-pb2" class="flex items-center gap-1">...</span>
+                                </div>
+                                 = <span id="calc-result-pab" class="font-bold text-gray-800">...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Sección Calculadora -->
+        <section id="calculator" class="bg-blue-800 text-white p-8 rounded-2xl shadow-2xl mb-8">
+            <h2 class="text-3xl font-bold text-center mb-2" data-lang="calculatorTitle">Resumen: La Calculadora Bayesiana</h2>
+            <p class="text-center text-blue-200 mb-6" data-lang="calculatorSubtitle">Todos los pasos anteriores nos llevan a esta simple y poderosa fórmula.</p>
+            <div class="bg-white text-gray-800 rounded-lg p-6 max-w-2xl mx-auto text-center shadow-inner">
+                <p class="font-mono text-lg">P(A|B) = (P(A) * P(B|A)) / P(B)</p>
+                <div class="text-5xl font-bold my-4 text-blue-800" id="final-result">...</div>
+                <p id="interpretation" class="text-lg text-gray-700" data-lang="interpretationText">Dada la evidencia (B), la probabilidad de A ha cambiado de <span class="font-bold" id="interp-pa"></span> a <span class="font-bold text-blue-800" id="interp-pagivenb"></span>.</p>
+            </div>
+        </section>
+        
+        <!-- Sección Ejemplo Vida Real -->
+        <section id="real-world" class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+             <h2 class="text-3xl font-bold text-center mb-6 text-gray-800" data-lang="realWorldTitle">Bayes en la Vida Real: Diagnóstico Médico</h2>
+            <p class="max-w-3xl mx-auto text-center mb-8 text-gray-700" data-lang="realWorldDesc">Imagina una prueba médica. El resultado positivo (Evidencia B) no siempre significa que tienes la enfermedad (Evento A). Bayes nos ayuda a calcular la probabilidad real.</p>
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="space-y-6">
+                    <div><label for="prevalence-slider" class="font-bold" data-lang="prevalenceTitle">Prevalencia de la enfermedad P(A)</label><p class="text-sm text-gray-600 mb-2" data-lang="prevalenceDesc">Qué tan común es la enfermedad en la población.</p><input type="range" id="prevalence-slider" min="0.001" max="0.2" value="0.01" step="0.001"><div class="text-right font-mono"><span data-lang="valueLabel">Valor</span>: <span id="prevalence-value">1%</span></div></div>
+                    <div><label for="sensitivity-slider" class="font-bold" data-lang="sensitivityTitle">Sensibilidad de la prueba P(B|A)</label><p class="text-sm text-gray-600 mb-2" data-lang="sensitivityDesc">Probabilidad de dar positivo si tienes la enfermedad.</p><input type="range" id="sensitivity-slider" min="0.8" max="0.999" value="0.99" step="0.001"><div class="text-right font-mono"><span data-lang="valueLabel">Valor</span>: <span id="sensitivity-value">99%</span></div></div>
+                    <div><label for="false-positive-slider" class="font-bold" data-lang="falsePositiveTitle">Tasa de Falsos Positivos P(B|no A)</label><p class="text-sm text-gray-600 mb-2" data-lang="falsePositiveDesc">Probabilidad de dar positivo si NO tienes la enfermedad.</p><input type="range" id="false-positive-slider" min="0.01" max="0.2" value="0.05" step="0.01"><div class="text-right font-mono"><span data-lang="valueLabel">Valor</span>: <span id="false-positive-value">5%</span></div></div>
+                </div>
+                <div class="bg-gray-100 p-6 rounded-lg text-center border">
+                    <h3 class="font-bold text-xl mb-2" data-lang="testResultTitle">Resultado del Test: Positivo</h3>
+                    <p class="text-gray-600 mb-4" data-lang="testResultQuestion">¿Cuál es la probabilidad de que realmente tengas la enfermedad?</p>
+                    <p class="font-mono text-gray-500 text-sm">P(A|B)</p><div id="medical-result" class="text-5xl font-bold my-4 text-red-600">...</div><p id="medical-interpretation" class="text-gray-700" data-lang="testResultInterpretation">¡A pesar del positivo, la probabilidad es solo del <span class="font-bold" id="medical-percentage"></span>!</p>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p data-lang="footerText">Creada por <a href="https://abxda.medium.com/" target="_blank" class="text-blue-600 hover:underline">abxda</a> con ayuda de Gemini y Claude.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // --- Translations Object ---
+        const translations = {
+            es: {
+                pageTitle: "Teorema de Bayes Interactivo",
+                mainTitle: "El Teorema de Bayes",
+                subtitle: "Actualizando tus Creencias con Datos",
+                introText: "El Teorema de Bayes es una poderosa herramienta matemática que nos ayuda a ajustar nuestras suposiciones o probabilidades sobre algo a medida que obtenemos nueva evidencia. ¡Vamos a descubrir cómo funciona de una manera visual e interactiva!",
+                protagonistsTitle: "Presentando a los Protagonistas",
+                protagonistPaTitle: "P(A): La Creencia Inicial (A Priori)",
+                protagonistPaDesc: "Es nuestra hipótesis o creencia base sobre algo, antes de tener nueva evidencia.",
+                protagonistPbaTitle: "P(B|A): El Detector de Evidencia",
+                protagonistPbaDesc: "Mide qué tan bien nuestra hipótesis 'A' predice la evidencia 'B'. ¿Qué tan probable es ver 'B' si 'A' es cierto?",
+                protagonistPbTitle: "P(B): La Evidencia",
+                protagonistPbDesc: "Es la probabilidad general de que ocurra nuestra evidencia 'B', sin importar si nuestra hipótesis es cierta o no.",
+                protagonistPabTitle: "P(A|B): La Creencia Actualizada (A Posteriori)",
+                protagonistPabDesc: "<b>Nuestro objetivo.</b> Es la probabilidad revisada de nuestra hipótesis 'A', después de haber considerado la evidencia 'B'.",
+                logicTitle: "La Lógica Detrás de la Fórmula",
+                logicSubtitle: "Mueve la línea de tiempo para controlar la animación de la derivación.",
+                timelineLabelStart: "Inicio",
+                timelineLabelDefs: "Definiciones Fundamentales",
+                timelineLabelCalcInt: "Calculando la Intersección",
+                timelineLabelResultInt: "Resultado: P(A ∩ B)",
+                timelineLabelCalcInt2: "Calculando desde otra perspectiva",
+                timelineLabelEquality: "El Paso Clave: La Igualdad",
+                timelineLabelFinal: "¡El Teorema de Bayes!",
+                animDescStart: "Comencemos con las bases. Una probabilidad es la proporción de un evento sobre el total de posibilidades (el universo U).",
+                animDescDefs: "<b>P(A)</b> es nuestra <b>creencia inicial</b>. <b>P(B|A)</b> es la probabilidad condicional: la chance de B, <b>sabiendo que ya ocurrió A</b> (el área de B dentro de A).",
+                animDescCalcInt: "<b>Objetivo:</b> Encontrar la probabilidad de que <b>A y B sucedan juntos</b>. Para ello, calculamos <b>P(A) * P(B|A)</b>. Tomamos la fracción del universo que es A, y luego tomamos la fracción de *ese pedazo* que también es B.",
+                animDescCancel: "La 'cancelación' visual de A nos muestra cómo pasamos de una probabilidad condicional a una probabilidad sobre el universo total.",
+                animDescResultInt: "El resultado de <b>P(A) * P(B|A)</b> es la probabilidad de la intersección, <b>P(A ∩ B)</b>, respecto al universo entero.",
+                animDescCalcInt2: "Podemos hacer lo mismo empezando por B: <b>P(B) * P(A|B)</b>. Lógicamente, el área de la intersección es la misma, sin importar cómo la calculemos.",
+                animDescCancel2: "Nuevamente, la cancelación visual nos aísla la misma área de intersección.",
+                animDescResultInt2: "Ambos caminos, <b>P(A)P(B|A)</b> y <b>P(B)P(A|B)</b>, nos llevan a la misma conclusión: la probabilidad de la intersección.",
+                animDescEquality: "<b>¡Eureka!</b> Esta igualdad, <b>P(A)P(B|A) = P(B)P(A|B)</b>, es la <b>llave maestra</b>. Nos da un puente para conectar P(A|B) con P(B|A).",
+                animDescFinal: "Despejando, obtenemos una fórmula para calcular una condicional difícil (ej. P(Enfermedad|Síntoma)) usando otras más fáciles de obtener. Así <b>actualizamos creencias con evidencia</b>.",
+                interactiveDiagramTitle: "Diagrama Interactivo",
+                sliderPaTitle: "P(A) - Probabilidad a Priori",
+                sliderPaDesc: "La probabilidad inicial del evento A.",
+                sliderPbTitle: "P(B) - Probabilidad de la Evidencia",
+                sliderPbDesc: "La probabilidad del evento B (la evidencia).",
+                sliderOverlapTitle: "Solapamiento (Intersección)",
+                sliderOverlapDesc: "Ajusta la distancia entre los círculos para cambiar su intersección.",
+                valueLabel: "Valor",
+                exploreTitle: "Explorando los Componentes: El Flujo de Bayes",
+                exploreStep1Title: "Paso 1: Empezamos con lo que sabemos",
+                exploreStep1Desc: "Los sliders nos dan directamente nuestras probabilidades base: la probabilidad de A, la de B, y la de que ambos ocurran a la vez (la intersección).",
+                exploreStep2Title: "Paso 2: Calculamos P(B|A) (Nuestro \"Detector de Evidencia\")",
+                exploreStep2Desc: "<b>Intuición:</b> Si ya sabemos que A ocurrió, nuestro \"universo\" se reduce al círculo A. P(B|A) es la proporción de ese nuevo universo que está ocupada por la intersección.",
+                exploreStep3Title: "Paso 3: Usamos Bayes para encontrar P(A|B)",
+                exploreStep3Desc: "Ahora juntamos todo. Usamos los \"ingredientes\" que ya tenemos para calcular la probabilidad que más nos interesa, que a menudo es la más difícil de medir directamente.",
+                formulaLabel: "Fórmula",
+                calculationLabel: "Cálculo",
+                calculatorTitle: "Resumen: La Calculadora Bayesiana",
+                calculatorSubtitle: "Todos los pasos anteriores nos llevan a esta simple y poderosa fórmula.",
+                interpretationText: "Dada la evidencia (B), la probabilidad de A ha cambiado de {pa} a {pab}.",
+                realWorldTitle: "Bayes en la Vida Real: Diagnóstico Médico",
+                realWorldDesc: "Imagina una prueba médica. El resultado positivo (Evidencia B) no siempre significa que tienes la enfermedad (Evento A). Bayes nos ayuda a calcular la probabilidad real.",
+                prevalenceTitle: "Prevalencia de la enfermedad P(A)",
+                prevalenceDesc: "Qué tan común es la enfermedad en la población.",
+                sensitivityTitle: "Sensibilidad de la prueba P(B|A)",
+                sensitivityDesc: "Probabilidad de dar positivo si tienes la enfermedad.",
+                falsePositiveTitle: "Tasa de Falsos Positivos P(B|no A)",
+                falsePositiveDesc: "Probabilidad de dar positivo si NO tienes la enfermedad.",
+                testResultTitle: "Resultado del Test: Positivo",
+                testResultQuestion: "¿Cuál es la probabilidad de que realmente tengas la enfermedad?",
+                testResultInterpretation: "¡A pesar del positivo, la probabilidad es solo del {percentage}%!",
+                footerText: "Creada por <a href=\"https://abxda.medium.com/\" target=\"_blank\" class=\"text-blue-600 hover:underline\">abxda</a> con ayuda de Gemini y Claude."
+            },
+            en: {
+                pageTitle: "Interactive Bayes' Theorem",
+                mainTitle: "Bayes' Theorem",
+                subtitle: "Updating Your Beliefs with Data",
+                introText: "Bayes' Theorem is a powerful mathematical tool that helps us adjust our assumptions or probabilities about something as we gather new evidence. Let's discover how it works in a visual and interactive way!",
+                protagonistsTitle: "Meet the Protagonists",
+                protagonistPaTitle: "P(A): The Prior Belief",
+                protagonistPaDesc: "This is our initial hypothesis or baseline belief about something, before we have new evidence.",
+                protagonistPbaTitle: "P(B|A): The Evidence Detector",
+                protagonistPbaDesc: "It measures how well our hypothesis 'A' predicts the evidence 'B'. How likely are we to see 'B' if 'A' is true?",
+                protagonistPbTitle: "P(B): The Evidence",
+                protagonistPbDesc: "This is the overall probability of our evidence 'B' occurring, regardless of whether our hypothesis is true or not.",
+                protagonistPabTitle: "P(A|B): The Updated Belief (Posterior)",
+                protagonistPabDesc: "<b>Our goal.</b> This is the revised probability of our hypothesis 'A', after considering the evidence 'B'.",
+                logicTitle: "The Logic Behind the Formula",
+                logicSubtitle: "Move the timeline to control the derivation animation.",
+                timelineLabelStart: "Start",
+                timelineLabelDefs: "Fundamental Definitions",
+                timelineLabelCalcInt: "Calculating the Intersection",
+                timelineLabelResultInt: "Result: P(A ∩ B)",
+                timelineLabelCalcInt2: "Calculating from another perspective",
+                timelineLabelEquality: "The Key Step: Equality",
+                timelineLabelFinal: "Bayes' Theorem!",
+                animDescStart: "Let's start with the basics. A probability is the proportion of an event relative to the total set of possibilities (the universe U).",
+                animDescDefs: "<b>P(A)</b> is our <b>initial belief</b>. <b>P(B|A)</b> is the conditional probability: the chance of B, <b>given that A has already occurred</b> (the area of B within A).",
+                animDescCalcInt: "<b>Goal:</b> Find the probability that <b>A and B happen together</b>. To do this, we calculate <b>P(A) * P(B|A)</b>. We take the fraction of the universe that is A, and then take the fraction of *that piece* which is also B.",
+                animDescCancel: "The visual 'cancellation' of A shows how we move from a conditional probability to a probability over the entire universe.",
+                animDescResultInt: "The result of <b>P(A) * P(B|A)</b> is the probability of the intersection, <b>P(A ∩ B)</b>, relative to the whole universe.",
+                animDescCalcInt2: "We can do the same starting from B's perspective: <b>P(B) * P(A|B)</b>. Logically, the area of the intersection is the same, no matter how we calculate it.",
+                animDescCancel2: "Again, the visual cancellation isolates the same intersection area.",
+                animDescResultInt2: "Both paths, <b>P(A)P(B|A)</b> and <b>P(B)P(A|B)</b>, lead us to the same conclusion: the probability of the intersection.",
+                animDescEquality: "<b>Eureka!</b> This equality, <b>P(A)P(B|A) = P(B)P(A|B)</b>, is the <b>master key</b>. It gives us a bridge to connect P(A|B) with P(B|A).",
+                animDescFinal: "By rearranging, we get a formula to calculate a difficult conditional (e.g., P(Disease|Symptom)) using easier-to-obtain probabilities. This is how we <b>update beliefs with evidence</b>.",
+                interactiveDiagramTitle: "Interactive Diagram",
+                sliderPaTitle: "P(A) - Prior Probability",
+                sliderPaDesc: "The initial probability of event A.",
+                sliderPbTitle: "P(B) - Evidence Probability",
+                sliderPbDesc: "The probability of event B (the evidence).",
+                sliderOverlapTitle: "Overlap (Intersection)",
+                sliderOverlapDesc: "Adjust the distance between the circles to change their intersection.",
+                valueLabel: "Value",
+                exploreTitle: "Exploring the Components: The Flow of Bayes",
+                exploreStep1Title: "Step 1: We start with what we know",
+                exploreStep1Desc: "The sliders directly give us our base probabilities: the probability of A, of B, and of both occurring at the same time (the intersection).",
+                exploreStep2Title: "Step 2: We calculate P(B|A) (Our \"Evidence Detector\")",
+                exploreStep2Desc: "<b>Intuition:</b> If we already know that A has occurred, our \"universe\" shrinks to circle A. P(B|A) is the proportion of this new universe that is occupied by the intersection.",
+                exploreStep3Title: "Step 3: We use Bayes to find P(A|B)",
+                exploreStep3Desc: "Now we put it all together. We use the \"ingredients\" we already have to calculate the probability we are most interested in, which is often the hardest to measure directly.",
+                formulaLabel: "Formula",
+                calculationLabel: "Calculation",
+                calculatorTitle: "Summary: The Bayesian Calculator",
+                calculatorSubtitle: "All the previous steps lead us to this simple and powerful formula.",
+                interpretationText: "Given the evidence (B), the probability of A has changed from {pa} to {pab}.",
+                realWorldTitle: "Bayes in Real Life: Medical Diagnosis",
+                realWorldDesc: "Imagine a medical test. A positive result (Evidence B) doesn't always mean you have the disease (Event A). Bayes helps us calculate the actual probability.",
+                prevalenceTitle: "Prevalence of the disease P(A)",
+                prevalenceDesc: "How common the disease is in the population.",
+                sensitivityTitle: "Test sensitivity P(B|A)",
+                sensitivityDesc: "Probability of a positive test if you have the disease.",
+                falsePositiveTitle: "False Positive Rate P(B|not A)",
+                falsePositiveDesc: "Probability of a positive test if you DO NOT have the disease.",
+                testResultTitle: "Test Result: Positive",
+                testResultQuestion: "What is the probability that you actually have the disease?",
+                testResultInterpretation: "Despite the positive result, the probability is only {percentage}%!",
+                footerText: "Created by <a href=\"https://abxda.medium.com/\" target=\"_blank\" class=\"text-blue-600 hover:underline\">abxda</a> with the help of Gemini and Claude."
+            }
+        };
+
+        // --- DOM Element Selection ---
+        const vennSvg = document.getElementById('venn-diagram');
+        const pASlider = document.getElementById('pA-slider');
+        const pBSlider = document.getElementById('pB-slider');
+        const overlapSlider = document.getElementById('overlap-slider');
+        const timelineSlider = document.getElementById('timeline-slider');
+        const animationCanvas = document.getElementById('animation-canvas');
+        const timelineLabel = document.getElementById('timeline-label');
+        const animationDescription = document.getElementById('animation-description');
+        const pAValue = document.getElementById('pA-value');
+        const pBValue = document.getElementById('pB-value');
+        const intersectionValue = document.getElementById('intersection-value');
+        const displayPA = document.getElementById('display-pA');
+        const displayPB = document.getElementById('display-pB');
+        const displayPBgivenA = document.getElementById('display-pBgivenA');
+        const displayPAgivenB = document.getElementById('display-pAgivenB');
+        const finalResult = document.getElementById('final-result');
+        const interpretation = document.getElementById('interpretation');
+        const interpPa = document.getElementById('interp-pa');
+        const interpPagivenb = document.getElementById('interp-pagivenb');
+
+        // --- Constants and State ---
+        const SVG_WIDTH = 400;
+        const SVG_HEIGHT = 200;
+        const TOTAL_AREA = SVG_WIDTH * SVG_HEIGHT;
+        let circleA, circleB, intersectionPath, aLabel, bLabel;
+        let pIntersectionGlobal = 0, pAglobal=0, pBglobal=0, pBgivenAglobal=0, pAgivenBglobal=0;
+
+        // --- Venn Diagram Logic ---
+        function initVennDiagram() {
+            vennSvg.innerHTML = ''; 
+            circleA = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circleB = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            intersectionPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            circleA.setAttribute('fill', 'rgba(59, 130, 246, 0.5)');
+            circleA.setAttribute('stroke', 'rgb(29, 78, 216)');
+            circleA.setAttribute('stroke-width', '2');
+            circleB.setAttribute('fill', 'rgba(16, 185, 129, 0.5)');
+            circleB.setAttribute('stroke', 'rgb(4, 120, 87)');
+            circleB.setAttribute('stroke-width', '2');
+            intersectionPath.setAttribute('fill', 'rgba(124, 58, 237, 0.6)');
+            intersectionPath.setAttribute('stroke', 'rgb(91, 33, 182)');
+            intersectionPath.setAttribute('stroke-width', '1');
+            aLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            aLabel.setAttribute('fill', '#1e3a8a'); aLabel.setAttribute('font-size', '16'); aLabel.setAttribute('font-weight', 'bold'); aLabel.textContent = 'A';
+            bLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            bLabel.setAttribute('fill', '#047857'); bLabel.setAttribute('font-size', '16'); bLabel.setAttribute('font-weight', 'bold'); bLabel.textContent = 'B';
+            vennSvg.appendChild(circleA);
+            vennSvg.appendChild(circleB);
+            vennSvg.appendChild(intersectionPath);
+            vennSvg.appendChild(aLabel);
+            vennSvg.appendChild(bLabel);
+        }
+
+        function updateVennDiagram() {
+            pAglobal = parseFloat(pASlider.value);
+            pBglobal = parseFloat(pBSlider.value);
+            const overlap = parseFloat(overlapSlider.value);
+            const areaA = pAglobal * TOTAL_AREA;
+            const areaB = pBglobal * TOTAL_AREA;
+            const rA = Math.sqrt(areaA / Math.PI);
+            const rB = Math.sqrt(areaB / Math.PI);
+            const maxDist = rA + rB;
+            const minDist = Math.abs(rA - rB) * 1.1;
+            const d = minDist + (maxDist - minDist) * (1 - overlap);
+            const cAx = SVG_WIDTH / 2 - d / 2;
+            const cAy = SVG_HEIGHT / 2;
+            const cBx = SVG_WIDTH / 2 + d / 2;
+            const cBy = SVG_HEIGHT / 2;
+            circleA.setAttribute('cx', cAx);
+            circleA.setAttribute('cy', cAy);
+            circleA.setAttribute('r', rA);
+            circleB.setAttribute('cx', cBx);
+            circleB.setAttribute('cy', cBy);
+            circleB.setAttribute('r', rB);
+            aLabel.setAttribute('x', cAx - 8); aLabel.setAttribute('y', cAy + 8);
+            bLabel.setAttribute('x', cBx - 8); bLabel.setAttribute('y', cBy + 8);
+            
+            let pathData = '';
+            if (d < rA + rB && d > Math.abs(rA - rB)) {
+                const d2 = d * d, rA2 = rA * rA, rB2 = rB * rB;
+                const angleA = Math.acos((d2 + rA2 - rB2) / (2 * d * rA));
+                const angleB = Math.acos((d2 + rB2 - rA2) / (2 * d * rB));
+                const intersectionArea = (angleA * rA2) - (0.5 * rA2 * Math.sin(2 * angleA)) + (angleB * rB2) - (0.5 * rB2 * Math.sin(2 * angleB));
+                if (!isNaN(intersectionArea)) {
+                    pIntersectionGlobal = intersectionArea / TOTAL_AREA;
+                    pBgivenAglobal = pAglobal > 0 ? pIntersectionGlobal / pAglobal : 0;
+                    pAgivenBglobal = pBglobal > 0 ? pIntersectionGlobal / pBglobal : 0;
+                }
+                const x1 = cAx + rA * Math.cos(angleA);
+                const y1_pos = cAy + rA * Math.sin(angleA);
+                const y1_neg = cAy - rA * Math.sin(angleA);
+                const largeArcFlagA = 2 * angleA > Math.PI ? 1 : 0;
+                const largeArcFlagB = 2 * angleB > Math.PI ? 1 : 0;
+                pathData = `M ${x1} ${y1_neg} A ${rA} ${rA} 0 ${largeArcFlagA} 1 ${x1} ${y1_pos} A ${rB} ${rB} 0 ${largeArcFlagB} 1 ${x1} ${y1_neg}`;
+                intersectionPath.setAttribute('d', pathData);
+            } else {
+                 pIntersectionGlobal = 0; pBgivenAglobal = 0; pAgivenBglobal = 0;
+                 intersectionPath.setAttribute('d', '');
+            }
+            pAValue.textContent = pAglobal.toFixed(2);
+            pBValue.textContent = pBglobal.toFixed(2);
+            intersectionValue.textContent = pIntersectionGlobal.toFixed(3);
+            displayPA.textContent = pAglobal.toFixed(2);
+            displayPB.textContent = pBglobal.toFixed(2);
+            displayPBgivenA.textContent = pBgivenAglobal.toFixed(3);
+            displayPAgivenB.textContent = pAgivenBglobal.toFixed(3);
+            finalResult.textContent = pAgivenBglobal.toFixed(3);
+            interpPa.textContent = pAglobal.toFixed(2);
+            interpPagivenb.textContent = pAgivenBglobal.toFixed(3);
+            updateAnimationIcons(pathData);
+            updateComponentCalculations(pathData);
+        }
+
+        // --- Medical Example Logic ---
+        function updateMedicalExample() {
+            const pA = parseFloat(document.getElementById('prevalence-slider').value);
+            const pBgivenA = parseFloat(document.getElementById('sensitivity-slider').value);
+            const pBgivenNotA = parseFloat(document.getElementById('false-positive-slider').value);
+            const pB = (pBgivenA * pA) + (pBgivenNotA * (1 - pA));
+            const pAgivenB = pB > 0 ? (pBgivenA * pA) / pB : 0;
+            document.getElementById('prevalence-value').textContent = `${(pA * 100).toFixed(1)}%`;
+            document.getElementById('sensitivity-value').textContent = `${(pBgivenA * 100).toFixed(1)}%`;
+            document.getElementById('false-positive-value').textContent = `${(pBgivenNotA * 100).toFixed(1)}%`;
+            const resultPercentage = pAgivenB * 100;
+            document.getElementById('medical-result').textContent = `${resultPercentage.toFixed(2)}%`;
+            document.getElementById('medical-interpretation').textContent = translations[currentLang].testResultInterpretation.replace('{percentage}', resultPercentage.toFixed(2));
+        }
+
+        function getIcon(type, pathData = '', className = 'icon-svg') {
+            const colors = {
+                A: 'rgba(59, 130, 246, 0.5)', B: 'rgba(16, 185, 129, 0.5)',
+                I: 'rgba(124, 58, 237, 0.6)', U: 'rgba(107, 114, 128, 0.3)'
+            };
+            let svgContent = '';
+            let viewBox = "0 0 400 200";
+            if (type === 'U') {
+                 viewBox = "0 0 100 60";
+                 svgContent = `<rect x="2.5" y="2.5" width="95" height="55" fill="${colors.U}" rx="5" /><text x="8" y="22" font-family="serif" font-style="italic" font-size="16" fill="rgba(255,255,255,0.8)">U</text>`;
+            } else if (type === 'I') {
+                svgContent = `<path d="${pathData}" fill="${colors.I}" />`;
+            } else {
+                const circle = type === 'A' ? circleA : circleB;
+                if (circle) {
+                    const r = circle.getAttribute('r');
+                    const cx = circle.getAttribute('cx');
+                    const cy = circle.getAttribute('cy');
+                    svgContent = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${colors[type]}" />`;
+                }
+            }
+            return `<svg class="${className}" viewBox="${viewBox}">${svgContent}</svg>`;
+        }
+        
+        function updateComponentCalculations(pathData) {
+            const iconA = getIcon('A', pathData, 'calculation-icon'), iconB = getIcon('B', pathData, 'calculation-icon'), iconI = getIcon('I', pathData, 'calculation-icon');
+            // Step 1
+            document.getElementById('calc-icon-pa').innerHTML = iconA;
+            document.getElementById('calc-val-pa').textContent = `P(A) = ${pAglobal.toFixed(3)}`;
+            document.getElementById('calc-icon-pb').innerHTML = iconB;
+            document.getElementById('calc-val-pb').textContent = `P(B) = ${pBglobal.toFixed(3)}`;
+            document.getElementById('calc-icon-pint').innerHTML = iconI;
+            document.getElementById('calc-val-pint').textContent = `P(A∩B) = ${pIntersectionGlobal.toFixed(3)}`;
+            
+            // Step 2
+            document.getElementById('calc-intersection1').innerHTML = `${iconI} ${pIntersectionGlobal.toFixed(3)}`;
+            document.getElementById('calc-pa1').innerHTML = `${iconA} ${pAglobal.toFixed(3)}`;
+            document.getElementById('calc-result-pba').textContent = pBgivenAglobal.toFixed(3);
+            
+            // Step 3
+            document.getElementById('calc-pa2').innerHTML = `${iconA} ${pAglobal.toFixed(3)}`;
+            document.getElementById('calc-pba2').textContent = pBgivenAglobal.toFixed(3);
+            document.getElementById('calc-pb2').innerHTML = `${iconB} ${pBglobal.toFixed(3)}`;
+            document.getElementById('calc-result-pab').textContent = pAgivenBglobal.toFixed(3);
+        }
+
+        // --- TIMELINE ANIMATION LOGIC ---
+        const animElements = {};
+
+        function createAnimElement(id, content, props) {
+            const el = document.createElement('div');
+            el.id = id;
+            el.className = 'anim-element';
+            el.innerHTML = content;
+            Object.assign(el.style, { opacity: 0, transform: 'scale(0.8)', ...props });
+            animationCanvas.appendChild(el);
+            animElements[id] = el;
+            return el;
+        }
+
+        function updateAnimationIcons(intersectionPathData) {
+            const iconA = getIcon('A'), iconB = getIcon('B'), iconI = getIcon('I', intersectionPathData), iconU = getIcon('U');
+            const update = (elId, content) => { if(document.getElementById(elId)) document.getElementById(elId).innerHTML = content; };
+            
+            update('icon-pa-protagonist', `<div class="fraction"><div class="numerator">${iconA}</div><div class="fraction-line"></div><div class="denominator">${iconU}</div></div>`);
+            update('icon-pb-protagonist', `<div class="fraction"><div class="numerator">${iconB}</div><div class="fraction-line"></div><div class="denominator">${iconU}</div></div>`);
+            const pbaProtagonistContent = `<div class="fraction"><div class="numerator">${iconI}</div><div class="fraction-line"></div><div class="denominator">${iconA}</div></div>`;
+            update('icon-pba-protagonist', pbaProtagonistContent);
+            const pabProtagonistContent = `<div class="fraction"><div class="numerator">${iconI}</div><div class="fraction-line"></div><div class="denominator">${iconB}</div></div>`;
+            update('icon-pab-protagonist', pabProtagonistContent);
+
+            if(animElements.pa_def) animElements.pa_def.querySelector('.numerator').innerHTML = iconA;
+            if(animElements.pba_def) {
+                animElements.pba_def.querySelector('.numerator').innerHTML = iconI;
+                animElements.pba_def.querySelector('.denominator').innerHTML = iconA;
+            }
+            if(animElements.pb_def) animElements.pb_def.querySelector('.numerator').innerHTML = iconB;
+            if(animElements.pab_def) {
+                animElements.pab_def.querySelector('.numerator').innerHTML = iconI;
+                animElements.pab_def.querySelector('.denominator').innerHTML = iconB;
+            }
+            if(animElements.prod_a_frac1_num) animElements.prod_a_frac1_num.innerHTML = iconA;
+            if(animElements.prod_a_frac2_num) animElements.prod_a_frac2_num.innerHTML = iconI;
+            if(animElements.prod_a_frac2_den) animElements.prod_a_frac2_den.innerHTML = iconA;
+            if(animElements.prod_b_frac1_num) animElements.prod_b_frac1_num.innerHTML = iconB;
+            if(animElements.prod_b_frac2_num) animElements.prod_b_frac2_num.innerHTML = iconI;
+            if(animElements.prod_b_frac2_den) animElements.prod_b_frac2_den.innerHTML = iconB;
+            if(animElements.result_intersect) animElements.result_intersect.querySelector('.numerator').innerHTML = iconI;
+        }
+
+        function initAnimation() {
+            animationCanvas.innerHTML = '<div id="animation-description"></div><div id="progress-bar" class="absolute top-0 left-0 h-1 bg-gray-200 w-full"><div id="progress-fill" class="h-full bg-blue-600 transition-all duration-300"></div></div>';
+            const iconA = getIcon('A'), iconB = getIcon('B'), iconI = getIcon('I'), iconU = getIcon('U');
+            createAnimElement('pa_def', `P(A) = <div class="fraction"><div class="numerator">${iconA}</div><div class="fraction-line"></div><div class="denominator">${iconU}</div></div>`, { left: '8%', top: '2%' });
+            createAnimElement('pba_def', `P(B|A) = <div class="fraction"><div class="numerator">${iconI}</div><div class="fraction-line"></div><div class="denominator">${iconA}</div></div>`, { right: '8%', top: '2%' });
+            createAnimElement('pb_def', `P(B) = <div class="fraction"><div class="numerator">${iconB}</div><div class="fraction-line"></div><div class="denominator">${iconU}</div></div>`, { left: '8%', top: '48%' });
+            createAnimElement('pab_def', `P(A|B) = <div class="fraction"><div class="numerator">${iconI}</div><div class="fraction-line"></div><div class="denominator">${iconB}</div></div>`, { right: '8%', top: '48%' });
+            
+            createAnimElement('prod_a_text', `P(A)P(B|A) = `, { left: '5%', top: '40%' });
+            createAnimElement('prod_a_frac1_num', iconA, { left: '25%', top: '30%' });
+            createAnimElement('prod_a_frac1_den', iconU, { left: '25%', top: '50%' });
+            createAnimElement('prod_a_line1', `<div class="fraction-line"></div>`, { left: '25%', top: '45%' });
+            createAnimElement('prod_a_times', `×`, { left: '38%', top: '40%', fontSize: '1.5rem' });
+            createAnimElement('prod_a_frac2_num', iconI, { left: '45%', top: '30%' });
+            createAnimElement('prod_a_frac2_den', iconA, { left: '45%', top: '50%' });
+            createAnimElement('prod_a_line2', `<div class="fraction-line"></div>`, { left: '45%', top: '45%' });
+            createAnimElement('prod_b_text', `P(B)P(A|B) = `, { left: '5%', top: '40%' });
+            createAnimElement('prod_b_frac1_num', iconB, { left: '25%', top: '30%' });
+            createAnimElement('prod_b_frac1_den', iconU, { left: '25%', top: '50%' });
+            createAnimElement('prod_b_line1', `<div class="fraction-line"></div>`, { left: '25%', top: '45%' });
+            createAnimElement('prod_b_times', `×`, { left: '38%', top: '40%', fontSize: '1.5rem' });
+            createAnimElement('prod_b_frac2_num', iconI, { left: '45%', top: '30%' });
+            createAnimElement('prod_b_frac2_den', iconB, { left: '45%', top: '50%' });
+            createAnimElement('prod_b_line2', `<div class="fraction-line"></div>`, { left: '45%', top: '45%' });
+            createAnimElement('result_intersect', `= <div class="fraction"><div class="numerator">${iconI}</div><div class="fraction-line"></div><div class="denominator">${iconU}</div></div> = P(A∩B)`, { right: '5%', top: '40%'});
+            createAnimElement('eq_lhs', `P(A)P(B|A)`, { top: '45%', left: '25%'});
+            createAnimElement('eq_symbol', `=`, { top: '45%', left: '50%'});
+            createAnimElement('eq_rhs_pb', `P(B)`, { top: '45%', left: '65%'});
+            createAnimElement('eq_rhs_pab', `P(A|B)`, { top: '45%', left: '80%'});
+            createAnimElement('final_line', `<div class="fraction-line" style="min-width: 180px;"></div>`, { top: '55%', left: '72%'});
+        }
+
+        function updateAnimation(time) {
+            const t = parseInt(time);
+            const desc = document.getElementById('animation-description');
+            const setStyle = (id, styles) => animElements[id] && Object.assign(animElements[id].style, styles);
+            const show = (id, props={}) => setStyle(id, { opacity: 1, transform: 'scale(1)', ...props });
+            const hide = (id, props={}) => setStyle(id, { opacity: 0, transform: 'scale(0.8)', ...props });
+            
+            document.getElementById('progress-fill').style.width = `${(t/1000)*100}%`;
+            
+            const allElements = Object.keys(animElements);
+            allElements.forEach(id => hide(id));
+
+            if (t < 50) {
+                desc.innerHTML = translations[currentLang].animDescStart;
+                timelineLabel.textContent = translations[currentLang].timelineLabelStart;
+            } else if (t < 250) {
+                desc.innerHTML = translations[currentLang].animDescDefs;
+                timelineLabel.textContent = translations[currentLang].timelineLabelDefs;
+                show('pa_def'); show('pba_def'); show('pb_def'); show('pab_def');
+            } else if (t < 450) {
+                timelineLabel.textContent = translations[currentLang].timelineLabelCalcInt;
+                desc.innerHTML = translations[currentLang].animDescCalcInt;
+                Object.keys(animElements).filter(k => k.startsWith('prod_a')).forEach(id => show(id));
+                if (t >= 350) {
+                    desc.innerHTML = translations[currentLang].animDescCancel;
+                    show('prod_a_frac1_num', { transform: 'translateX(110px) scale(0.5)', opacity: 0 });
+                    show('prod_a_frac2_den', { transform: 'translateX(-110px) scale(0.5)', opacity: 0 });
+                }
+            } else if (t < 550) {
+                timelineLabel.textContent = translations[currentLang].timelineLabelResultInt;
+                desc.innerHTML = translations[currentLang].animDescResultInt;
+                show('result_intersect');
+            } else if (t < 750) {
+                timelineLabel.textContent = translations[currentLang].timelineLabelCalcInt2;
+                desc.innerHTML = translations[currentLang].animDescCalcInt2;
+                Object.keys(animElements).filter(k => k.startsWith('prod_b')).forEach(id => show(id));
+                 if (t >= 650) {
+                    desc.innerHTML = translations[currentLang].animDescCancel2;
+                    show('prod_b_frac1_num', { transform: 'translateX(110px) scale(0.5)', opacity: 0 });
+                    show('prod_b_frac2_den', { transform: 'translateX(-110px) scale(0.5)', opacity: 0 });
+                }
+            } else if (t < 850) {
+                 timelineLabel.textContent = translations[currentLang].timelineLabelResultInt;
+                 desc.innerHTML = translations[currentLang].animDescResultInt2;
+                 show('result_intersect');
+            } else if (t < 950) {
+                timelineLabel.textContent = translations[currentLang].timelineLabelEquality;
+                desc.innerHTML = translations[currentLang].animDescEquality;
+                show('eq_lhs', { top: '45%', left: '25%'});
+                show('eq_symbol', { top: '45%', left: '50%'});
+                show('eq_rhs_pb', { top: '45%', left: '65%'});
+                show('eq_rhs_pab', { top: '45%', left: '80%'});
+            } else {
+                timelineLabel.textContent = translations[currentLang].timelineLabelFinal;
+                desc.innerHTML = translations[currentLang].animDescFinal;
+                show('eq_rhs_pab', { top: '45%', left: '20%' });
+                show('eq_symbol', { top: '45%', left: '35%' });
+                show('eq_lhs', { top: '35%', left: '72%' });
+                show('final_line');
+                show('eq_rhs_pb', { top: '65%', left: '72%' });
+            }
+        }
+        
+        // --- Language Switcher Logic ---
+        let currentLang = 'es';
+        const langEsBtn = document.getElementById('lang-es');
+        const langEnBtn = document.getElementById('lang-en');
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.dataset.lang;
+                if (translations[lang][key]) {
+                    if (key === 'interpretationText') {
+                         el.innerHTML = translations[lang][key]
+                            .replace('{pa}', `<span class="font-bold">${pAglobal.toFixed(2)}</span>`)
+                            .replace('{pab}', `<span class="font-bold text-blue-800">${pAgivenBglobal.toFixed(3)}</span>`);
+                    } else if (key === 'testResultInterpretation') {
+                        const resultPercentage = pAgivenBglobal * 100;
+                        el.innerHTML = translations[lang][key].replace('{percentage}', `<span class="font-bold">${(parseFloat(document.getElementById('medical-result').textContent) || 0).toFixed(2)}</span>`);
+                    } else {
+                        el.innerHTML = translations[lang][key];
+                    }
+                }
+            });
+
+            langEsBtn.classList.toggle('active', lang === 'es');
+            langEnBtn.classList.toggle('active', lang === 'en');
+            updateAnimation(timelineSlider.value); // Re-render animation text
+        }
+
+        langEsBtn.addEventListener('click', () => setLanguage('es'));
+        langEnBtn.addEventListener('click', () => setLanguage('en'));
+
+
+        // --- Event Listeners ---
+        pASlider.addEventListener('input', updateVennDiagram);
+        pBSlider.addEventListener('input', updateVennDiagram);
+        overlapSlider.addEventListener('input', updateVennDiagram);
+        timelineSlider.addEventListener('input', (e) => updateAnimation(e.target.value));
+        document.getElementById('prevalence-slider').addEventListener('input', updateMedicalExample);
+        document.getElementById('sensitivity-slider').addEventListener('input', updateMedicalExample);
+        document.getElementById('false-positive-slider').addEventListener('input', updateMedicalExample);
+
+        // --- Initial Call ---
+        window.addEventListener('load', () => {
+            initAnimation();
+            initVennDiagram();
+            updateVennDiagram();
+            updateAnimation(0);
+            updateMedicalExample();
+            setLanguage('es'); // Set default language
+        });
+
+    </script>
+</body>
+</html>
